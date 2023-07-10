@@ -1,0 +1,31 @@
+<odoo>
+    <data>
+        <record id="view_repair_order_form_inherit" model="ir.ui.view">
+            <field name="name">my.repair.order.form</field>
+            <field name="model">repair.order</field>
+            <field name="inherit_id" ref="repair.view_repair_order_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='invoice_method']" position="after">               
+                    <group>
+                        <field name="is_category_3" invisible="1"/>
+                        <field name="date_created"/>
+                        <field name="total_net"/>
+                        <field name="invoice_no"/>
+                        <button name="sync" string="Sync" type="object" action="sync_products" class="btn btn-primary o_form_button_edit"/>
+                    </group>
+                </xpath>
+                <notebook position="inside">
+                    <page string="Billed equipment" name="billed_equipment">
+                        <field name="custom_repair_ids" mode="tree">
+                            <tree string="My Custom Tree View" editable="bottom">
+                                <field name="product"/>
+                                <field name="cantidad"/>
+                                <field name="total"/>
+                            </tree>
+                        </field>
+                    </page>
+                </notebook>
+            </field>
+        </record>
+    </data>
+</odoo>
