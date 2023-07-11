@@ -17,10 +17,20 @@ class CustomRepair(models.Model):
     _name = 'custom.repair'
     _description = 'custom.repair'
 
+    product_code = fields.Char(string='Product Code')
+    code = fields.Char(string='Code')
     product = fields.Char(string='Product')
-    cantidad = fields.Char(string='Cantidad')
-    total = fields.Char(string='Total Neto ($)')
+    cantidad = fields.Float(string='Cantidad')
+    total = fields.Float(string='Total Neto ($)')
     repair_order = fields.Many2one('repair.order', 'My Repair')
+
+    def select_row(self):
+        _logger.info('Current ID: %s', self.id)
+        _logger.info('Product: %s', self.product)
+        self.repair_order.total_net = self.total/self.cantidad
+        get_product_name = self.env['product.template'].sudo().search([('name', 'ilike', self.product.strip())], limit=1)
+        _logger.info('Product name from template: %s', get_product_name.name)
+        self.repair_order.product_id = get_product_name.product_variant_id.id
 
 
 class InheritRepair(models.Model):
@@ -123,7 +133,9 @@ class InheritRepair(models.Model):
         repairs_data = []
         for product in products:
             vals = {
-                'product': '[' + product[1] + '] ' + product[2],
+                'product': product[2],
+                'code': product[1],
+                'product_code': '[' + product[1] + '] ' + product[2],
                 'cantidad': product[3],
                 'total': format(product[4] / 1000, ",.3f").replace(",", "."),
             }

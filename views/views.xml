@@ -18,9 +18,10 @@
                     <page string="Billed equipment" name="billed_equipment">
                         <field name="custom_repair_ids" mode="tree">
                             <tree string="My Custom Tree View" editable="bottom">
-                                <field name="product"/>
+                                <field name="product_code"/>
                                 <field name="cantidad"/>
                                 <field name="total"/>
+                                <button name="select_row" string="Select" type="object" class="oe_highlight"/>
                             </tree>
                         </field>
                     </page>
