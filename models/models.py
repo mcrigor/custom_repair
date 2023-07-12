@@ -7,6 +7,7 @@ import pyodbc
 import os
 import re
 import logging
+import decimal
 
 _logger = logging.getLogger(__name__)
 
@@ -26,11 +27,18 @@ class CustomRepair(models.Model):
 
     def select_row(self):
         _logger.info('Current ID: %s', self.id)
-        _logger.info('Product: %s', self.product)
+        _logger.info('Code: %s', self.code)
         self.repair_order.total_net = self.total/self.cantidad
-        get_product_name = self.env['product.template'].sudo().search([('name', 'ilike', self.product.strip())], limit=1)
-        _logger.info('Product name from template: %s', get_product_name.name)
-        self.repair_order.product_id = get_product_name.product_variant_id.id
+        code = self.code
+        _logger.info('Code again: %s', code)
+        get_product_name = self.env['product.product'].search([('default_code', '=', str(code).strip())])
+        _logger.info("get product name: %s", get_product_name)
+        # TODO Add validation if get_product_name is true
+        if get_product_name:
+            _logger.info('Product name from template: %s', get_product_name.product_tmpl_id.name)
+            self.repair_order.product_id = get_product_name.id
+        else:
+            raise exceptions.ValidationError("Product with internal reference " + self.code + " not found.")
 
 
 class InheritRepair(models.Model):
@@ -42,6 +50,13 @@ class InheritRepair(models.Model):
     total_net = fields.Float(string="Total Net")
     
     custom_repair_ids = fields.One2many('custom.repair', 'repair_order', 'Test Repair')
+
+    formatted_field = fields.Char(string='Formatted Field', compute='_compute_formatted_field')
+
+    @api.depends('total_net')
+    def _compute_formatted_field(self):
+        for record in self:
+            record.formatted_field = '{:,.0f}'.format(record.total_net).replace(',', '.')
 
     def get_products(self, invoice_no):
         # SQL Server connection parameters
@@ -103,7 +118,20 @@ class InheritRepair(models.Model):
         conn.close()
         print("Rows: ", rows)
         return rows
+    
+    def convert_float(self, float_value):
+        """Converts a float value to the desired format."""
+        decimal_value = decimal.Decimal(float_value)
+        formatted_value = decimal_value.quantize(decimal.Decimal("0.000"))
+        formatted_value = str(formatted_value).replace(",", "")
+        return formatted_value
 
+    def convert_to_vat_format(self, number):
+        region_code = str(number)[:2]  # Extract the first two digits as the region code
+        serial_number = str(number)[2:5] + '.' + str(number)[5:8]  # Format the serial number
+        verification_char = '0'  # Calculate the verification character 
+        vat_number = f"{region_code}.{serial_number}-{verification_char}"  # Combine all parts
+        return vat_number
 
     @api.multi
     def sync(self):
@@ -113,10 +141,12 @@ class InheritRepair(models.Model):
         products = self.get_products(str(invoice_no))
         customer = self.get_customer(str(invoice_no))
         try:
-            cust_name = customer[0][2]
-            _logger.info('cust_name: %s', cust_name)
-            customer_q = self.env['res.partner'].search([('name', 'ilike', cust_name.strip())], limit=1)
-            _logger.info('customer date: %s', customer[0][7])
+            _logger.info('cust_name: %s', customer[0][2])
+            vat = str(customer[0][1])
+            _logger.info('VAT: %s', vat)
+            vat_format = self.convert_to_vat_format(vat)
+            customer_q = self.env['res.partner'].search([('vat', '=', vat_format)], limit=1)  # Select customer in odoo that matches the vat
+            _logger.info('VAT format: %s', vat_format)
             _logger.info('Customer_q: %s', customer_q)
             if customer_q:
                 self.partner_id = customer_q.id
@@ -136,9 +166,11 @@ class InheritRepair(models.Model):
                 'product': product[2],
                 'code': product[1],
                 'product_code': '[' + product[1] + '] ' + product[2],
-                'cantidad': product[3],
-                'total': format(product[4] / 1000, ",.3f").replace(",", "."),
+                'cantidad': self.convert_float(product[3]),
+                'total': product[4],
             }
+            _logger.info('cantidad: %s', product[3])
+            _logger.info('toal neto: %s', product[4])
             repairs_data.append(vals)
         self.custom_repair_ids = repairs_data
 
