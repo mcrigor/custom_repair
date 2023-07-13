@@ -20,8 +20,8 @@
                         <field name="custom_repair_ids" mode="tree">
                             <tree string="My Custom Tree View" editable="bottom">
                                 <field name="product_code"/>
-                                <field name="cantidad"/>
-                                <field name="total"/>
+                                <field name="formatted_cantidad"/>
+                                <field name="formatted_total"/>
                                 <button name="select_row" string="Select" type="object" class="oe_highlight"/>
                             </tree>
                         </field>

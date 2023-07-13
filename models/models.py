@@ -25,6 +25,19 @@ class CustomRepair(models.Model):
     total = fields.Float(string='Total Neto ($)')
     repair_order = fields.Many2one('repair.order', 'My Repair')
 
+    formatted_cantidad = fields.Char(string='Cantidad', compute='_compute_formatted_cantidad')
+    formatted_total = fields.Char(string='Total Neto ($)', compute='_compute_formatted_total')
+
+    @api.depends('cantidad')
+    def _compute_formatted_cantidad(self):
+        for record in self:
+            record.formatted_cantidad = '{0:.3f}'.format(record.cantidad)
+
+    @api.depends('total')
+    def _compute_formatted_total(self):
+        for record in self:
+            record.formatted_total = '{:,.0f}'.format(record.total).replace(',', '.')
+
     def select_row(self):
         _logger.info('Current ID: %s', self.id)
         _logger.info('Code: %s', self.code)
