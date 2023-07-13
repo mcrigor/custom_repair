@@ -18,7 +18,7 @@ class CustomRepair(models.Model):
     _name = 'custom.repair'
     _description = 'custom.repair'
 
-    product_code = fields.Char(string='Product Code')
+    product_code = fields.Char(string='Product Code') # product + code field
     code = fields.Char(string='Code')
     product = fields.Char(string='Product')
     cantidad = fields.Float(string='Cantidad')
@@ -31,7 +31,7 @@ class CustomRepair(models.Model):
     @api.depends('cantidad')
     def _compute_formatted_cantidad(self):
         for record in self:
-            record.formatted_cantidad = '{0:.3f}'.format(record.cantidad)
+            record.formatted_cantidad = '{:,.0f}'.format(record.cantidad).replace(',', '.')
 
     @api.depends('total')
     def _compute_formatted_total(self):
@@ -51,6 +51,15 @@ class CustomRepair(models.Model):
             _logger.info('Product name from template: %s', get_product_name.product_tmpl_id.name)
             self.repair_order.product_id = get_product_name.id
         else:
+            # TODO create a product if code is not found
+            Product = request.env['product.product']
+            new_product = Product.create({
+                'name': self.product,
+                'default_code': self.code,
+                # Add more fields as required
+            })
+            print("Newly created product: ", new_product)
+            self.repair_order.product_id = new_product.id
             raise exceptions.ValidationError("Product with internal reference " + self.code + " not found.")
 
 
@@ -139,12 +148,55 @@ class InheritRepair(models.Model):
         formatted_value = str(formatted_value).replace(",", "")
         return formatted_value
 
-    def convert_to_vat_format(self, number):
-        region_code = str(number)[:2]  # Extract the first two digits as the region code
-        serial_number = str(number)[2:5] + '.' + str(number)[5:8]  # Format the serial number
-        verification_char = '0'  # Calculate the verification character 
-        vat_number = f"{region_code}.{serial_number}-{verification_char}"  # Combine all parts
-        return vat_number
+    def string_to_list(self, string):
+
+        list_of_integers = []
+        for character in string:
+            list_of_integers.append(int(character))
+
+        return list_of_integers
+
+    def format_vat(self, vat_number):
+        # Remove hyphen and check digit
+        vat_number = str(vat_number)
+        
+        # 1. Reverse the digits
+        reversed_vat_number = vat_number[::-1]
+        print('1. Reverse the VAT number: ', reversed_vat_number)
+
+        # 2 convert to list the reverse vat number
+        vat_list = self.string_to_list(reversed_vat_number)
+        print('2 Vat list: ', vat_list)
+
+        # 3 Multiply each digit by its series and sum
+        series = [2, 3, 4, 5, 6, 7, 2, 3]
+        ans_to_multiplier = []
+
+        for i in range(len(vat_list)):
+            product = vat_list[i] * series[i]
+            ans_to_multiplier.append(product)
+        sum_of_multiplier = sum(ans_to_multiplier)
+        print('3 Multiply each digit by its series and sum: ', sum(ans_to_multiplier))
+
+        # 4 Divide sum_of_multiplier to 11
+        divided_multiplier = sum_of_multiplier/11
+        print('4 Divide sum_of_multiplier to 11: ', divided_multiplier)
+
+        # 5 Multiply divided_multiplier to 11
+        multiply_by_11 = int(divided_multiplier) * 11
+        print('5 Multiply divided_multiplier to 11: ', multiply_by_11)
+
+        # 6 ans to 3 minus ans to 5
+        three_minus_5 = sum_of_multiplier - multiply_by_11
+        print('6 ans to 3 minus ans to 5: ', three_minus_5)
+
+        # 7 Subtract 11 to step 6
+        check_digit = 11-three_minus_5
+        print('7 Subtract 11 to step 6: ', check_digit)
+        
+        formatted_vat = f"{vat_number[:2]}.{vat_number[2:5]}.{vat_number[5:8]}-{check_digit}"
+        
+        return formatted_vat
 
     @api.multi
     def sync(self):
@@ -157,7 +209,7 @@ class InheritRepair(models.Model):
             _logger.info('cust_name: %s', customer[0][2])
             vat = str(customer[0][1])
             _logger.info('VAT: %s', vat)
-            vat_format = self.convert_to_vat_format(vat)
+            vat_format = self.format_vat(vat)
             customer_q = self.env['res.partner'].search([('vat', '=', vat_format)], limit=1)  # Select customer in odoo that matches the vat
             _logger.info('VAT format: %s', vat_format)
             _logger.info('Customer_q: %s', customer_q)
@@ -166,9 +218,23 @@ class InheritRepair(models.Model):
                 new_create_date = customer[0][7]
                 self.date_created = new_create_date 
             else:
-                raise exceptions.ValidationError("Customer not found with the name " + customer[0][2])
+                # Create customer here if not found
+                customer_create = request.env['res.partner'].create({
+                    'name': customer[0][2],
+                    'street': customer[0][3],
+                    'city': customer[0][4],
+                    'state': customer[0][5],
+                    'phone': customer[0][6],
+                    'vat': vat_format # calculated vat here
+                })
+                # Set the created partner in repair form view
+                _logger.info("Newly created customer: %s", customer_create)
+                self.partner_id = customer_create.id
+                new_create_date = customer[0][7]
+                self.date_created = new_create_date 
+                # raise exceptions.ValidationError("Customer not found with the name " + customer[0][2])
         except IndexError:
-            raise exceptions.ValidationError("Invoice number not found.")
+            raise exceptions.ValidationError("Invoice number not found.")  # this error will pop up if the invoice no. enetered in invoice_no field not found in sql server
         repair_orders = self.env['custom.repair'].search([('repair_order', '=', self.id)])  # Search custom repair records with current partner
         for ro in repair_orders:
             _logger.info('ro: %s', ro)
