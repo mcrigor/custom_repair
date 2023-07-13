@@ -5,11 +5,15 @@
             <field name="model">repair.order</field>
             <field name="inherit_id" ref="repair.view_repair_order_form"/>
             <field name="arch" type="xml">
+                <xpath expr="//field[@name='product_uom']" position="after">
+        <field name="product_uom" attrs="{'invisible': True}">
+        </field>
+      </xpath>
                 <xpath expr="//field[@name='x_tec2']" position="after">               
                     
                        
-                        <field name="date_created"/>
-         
+                       
+                        <field name="date_created" widget="date" format="dd/mm/yyyy"/>
                         <field name="formatted_field" string="Total neto"/>
                         <field name="invoice_no"/>
                         <button name="sync" string="Sync" type="object" action="sync_products" class="btn btn-primary o_form_button_edit"/>
