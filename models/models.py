@@ -60,7 +60,7 @@ class CustomRepair(models.Model):
             })
             _logger.info("Newly created product: %s", new_product)
             self.repair_order.product_id = new_product.id
-            raise exceptions.ValidationError("Product with internal reference " + self.code + " not found.")
+            # raise exceptions.ValidationError("Product with internal reference " + self.code + " not found.")
 
 
 class InheritRepair(models.Model):
@@ -146,7 +146,7 @@ class InheritRepair(models.Model):
         return formatted_value
 
     def string_to_list(self, string):
-
+        _logger.info("String: %s", string)
         list_of_integers = []
         for character in string:
             list_of_integers.append(int(character))
@@ -158,7 +158,7 @@ class InheritRepair(models.Model):
         vat_number = str(vat_number)
         
         # 1. Reverse the digits
-        reversed_vat_number = vat_number[::-1]
+        reversed_vat_number = vat_number[::-1].strip()
         _logger.info('1. Reverse the VAT number: %s', reversed_vat_number)
 
         # 2 convert to list the reverse vat number
@@ -189,6 +189,12 @@ class InheritRepair(models.Model):
 
         # 7 Subtract 11 to step 6
         check_digit = 11-three_minus_5
+        if check_digit == 11:
+            check_digit = 0
+        elif check_digit == 10:
+            check_digit = K
+        else:
+           check_digit = 11-three_minus_5
         _logger.info('7 Subtract 11 to step 6: %s', check_digit)
         
         formatted_vat = f"{vat_number[:2]}.{vat_number[2:5]}.{vat_number[5:8]}-{check_digit}"
