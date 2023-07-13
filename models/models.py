@@ -58,7 +58,7 @@ class CustomRepair(models.Model):
                 'default_code': self.code,
                 # Add more fields as required
             })
-            print("Newly created product: ", new_product)
+            _logger.info("Newly created product: %s", new_product)
             self.repair_order.product_id = new_product.id
             raise exceptions.ValidationError("Product with internal reference " + self.code + " not found.")
 
@@ -86,7 +86,6 @@ class InheritRepair(models.Model):
         database = os.getenv("DB_NAME")
         username = os.getenv("DB_USER")
         password = os.getenv("DB_PASSWORD")
-        print("Server: ", server)
         driver = '{ODBC Driver 17 for SQL Server}'
         connection_string = f'DRIVER={driver};SERVER={server};DATABASE={database};UID={username};PWD={password}'
         conn = pyodbc.connect(connection_string)
@@ -114,7 +113,6 @@ class InheritRepair(models.Model):
         database = os.getenv("DB_NAME")
         username = os.getenv("DB_USER")
         password = os.getenv("DB_PASSWORD")
-        print("Server: ", server)
         driver = '{ODBC Driver 17 for SQL Server}'
         connection_string = f'DRIVER={driver};SERVER={server};DATABASE={database};UID={username};PWD={password}'
         conn = pyodbc.connect(connection_string)
@@ -138,7 +136,6 @@ class InheritRepair(models.Model):
         rows = cursor.fetchall()
         cursor.close()
         conn.close()
-        print("Rows: ", rows)
         return rows
     
     def convert_float(self, float_value):
@@ -162,11 +159,11 @@ class InheritRepair(models.Model):
         
         # 1. Reverse the digits
         reversed_vat_number = vat_number[::-1]
-        print('1. Reverse the VAT number: ', reversed_vat_number)
+        _logger.info('1. Reverse the VAT number: %s', reversed_vat_number)
 
         # 2 convert to list the reverse vat number
         vat_list = self.string_to_list(reversed_vat_number)
-        print('2 Vat list: ', vat_list)
+        _logger.info('2 Vat list: %s', vat_list)
 
         # 3 Multiply each digit by its series and sum
         series = [2, 3, 4, 5, 6, 7, 2, 3]
@@ -176,23 +173,23 @@ class InheritRepair(models.Model):
             product = vat_list[i] * series[i]
             ans_to_multiplier.append(product)
         sum_of_multiplier = sum(ans_to_multiplier)
-        print('3 Multiply each digit by its series and sum: ', sum(ans_to_multiplier))
+        _logger.info('3 Multiply each digit by its series and sum: %s', sum(ans_to_multiplier))
 
         # 4 Divide sum_of_multiplier to 11
         divided_multiplier = sum_of_multiplier/11
-        print('4 Divide sum_of_multiplier to 11: ', divided_multiplier)
+        _logger.info('4 Divide sum_of_multiplier to 11: %s', divided_multiplier)
 
         # 5 Multiply divided_multiplier to 11
         multiply_by_11 = int(divided_multiplier) * 11
-        print('5 Multiply divided_multiplier to 11: ', multiply_by_11)
+        _logger.info('5 Multiply divided_multiplier to 11: %s', multiply_by_11)
 
         # 6 ans to 3 minus ans to 5
         three_minus_5 = sum_of_multiplier - multiply_by_11
-        print('6 ans to 3 minus ans to 5: ', three_minus_5)
+        _logger.info('6 ans to 3 minus ans to 5: %s', three_minus_5)
 
         # 7 Subtract 11 to step 6
         check_digit = 11-three_minus_5
-        print('7 Subtract 11 to step 6: ', check_digit)
+        _logger.info('7 Subtract 11 to step 6: %s', check_digit)
         
         formatted_vat = f"{vat_number[:2]}.{vat_number[2:5]}.{vat_number[5:8]}-{check_digit}"
         
