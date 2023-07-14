@@ -219,34 +219,15 @@ class InheritRepair(models.Model):
             customer_q = self.env['res.partner'].search([('vat', '=', vat_format)], limit=1)  # Select customer in odoo that matches the vat
             _logger.info('VAT format: %s', vat_format)
             _logger.info('Customer_q: %s', customer_q)
-            get_state = request.env['res.country.state'].sudo().search([('name', 'ilike', str(customer[0][5]).strip())])
-            _logger.info('Get State: %s', get_state)
             if customer_q:
-                get_state_res = customer_q.state_id
-                if not get_state_res:
-                    if get_state:
-                        customer_q.write({'state_id': get_state.id})
-                    else: 
-                        now = datetime.now()
-                        timestamp = now.strftime("%Y%m%d%H%M%S")
-                        create_state = request.env['res.country.state'].sudo().create({'name': customer[0][5], 'code': str(timestamp), 'country_id': 46}) #Change the code by timestamp to be unique
-                        self.partner_id.state_id = create_state.id
                 _logger.info('Create date: %s', customer[0][7])
                 self.partner_id = customer_q.id
                 new_create_date = customer[0][7]
                 self.date_created = new_create_date 
             else:
-                # Find state first
-                # get_state = request.env['res.country.state'].sudo().search([('name', 'ilike', str(customer[0][5]).strip())])
-                # _logger.info('Get State: %s', get_state)
                 # Create customer here if not found
-                state = None
-                if get_state:
-                    state = get_state.id
-                else:
-                    now = datetime.now()
-                    timestamp = now.strftime("%Y%m%d%H%M%S")
-                    state = request.env['res.country.state'].sudo().create({'name': customer[0][5], 'code': str(timestamp), 'country_id': 46}) #Change the code by timestamp to be unique
+                # search_state = request.env[]
+                
                 customer_create = request.env['res.partner'].create({
                     'name': customer[0][2],
                     'street': customer[0][3],
