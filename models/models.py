@@ -243,15 +243,18 @@ class InheritRepair(models.Model):
                 state = None
                 if get_state:
                     state = get_state.id
+                    _logger.info('if get state: %s', state)
                 else:
                     now = datetime.now()
                     timestamp = now.strftime("%Y%m%d%H%M%S")
                     state = request.env['res.country.state'].sudo().create({'name': customer[0][5], 'code': str(timestamp), 'country_id': 46}) #Change the code by timestamp to be unique
+                    state = state.id
+                    _logger.info('else ng get state: %s', state)
                 customer_create = request.env['res.partner'].create({
                     'name': customer[0][2],
                     'street': customer[0][3],
                     'city': customer[0][4],
-                    'state': customer[0][5],
+                    'state_id': state,
                     'phone': customer[0][6],
                     'vat': vat_format # calculated vat here
                 })
