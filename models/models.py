@@ -69,7 +69,7 @@ class InheritRepair(models.Model):
 
     invoice_no = fields.Char(string="Invoice No.")
     create_date = fields.Datetime(string="Create date")
-    date_created = fields.Datetime(string="Create date")
+    date_created = fields.Char(string="Create date")
     total_net = fields.Float(string="Total Net")
     partner_id = fields.Many2one('res.partner', string='Customer', required=False, default=1)
     product_id = fields.Many2one('product.product', string='Product to repair', required=False)
@@ -233,7 +233,7 @@ class InheritRepair(models.Model):
                         self.partner_id.state_id = create_state.id
                 _logger.info('Create date: %s', customer[0][7])
                 self.partner_id = customer_q.id
-                new_create_date = customer[0][7]
+                new_create_date = str(customer[0][7])
                 self.date_created = new_create_date 
             else:
                 # Find state first
