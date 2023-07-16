@@ -8,12 +8,21 @@
                 <field name="product_uom" position="attributes">
                     <attribute name="invisible">1</attribute>
                 </field>
+                
+                <xpath expr="//field[@name='partner_id']" position="replace">
+                    <field name="partner_id"/>                
+                    <field name="street" string=""/>
+                    <field name="city" string=""/>
+                    <field name="state" string=""/>                                      
+                </xpath>
+ 
                 <xpath expr="//field[@name='x_tec2']" position="after">                 
                     <field name="date_created"/>
                     <field name="formatted_field" string="Total neto"/>
                     <field name="invoice_no"/>
                     <button name="sync" string="Sync" type="object" action="sync_products" class="btn btn-primary o_form_button_edit"/>
                 </xpath>
+
                 <notebook position="inside">
                     <page string="Billed equipment" name="billed_equipment">
                         <field name="custom_repair_ids" mode="tree">
@@ -26,6 +35,7 @@
                         </field>
                     </page>
                 </notebook>
+
             </field>
         </record>
     </data>
