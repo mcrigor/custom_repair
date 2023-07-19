@@ -46,13 +46,13 @@ class CustomRepair(models.Model):
         _logger.info('Code again: %s', code)
         get_product_name = self.env['product.product'].search([('default_code', '=', str(code).strip())])
         _logger.info("get product name: %s", get_product_name)
-        # TODO Add validation if get_product_name is true
+        
         if get_product_name:
             _logger.info('Product name from template: %s', get_product_name.product_tmpl_id.name)
             self.repair_order.product_id = get_product_name.id
             self.repair_order.product_uom = 1
         else:
-            # TODO create a product if code is not found
+            # TODO verify if product is created
             Product = request.env['product.product']
             new_product = Product.create({
                 'name': self.product,
@@ -60,7 +60,8 @@ class CustomRepair(models.Model):
                 # Add more fields as required
             })
             _logger.info("Newly created product: %s", new_product)
-            self.repair_order.product_id = new_product.id
+            self.repair_order.product_id = new_
+product.id
             # raise exceptions.ValidationError("Product with internal reference " + self.code + " not found.")
 
 
@@ -72,6 +73,11 @@ class InheritRepair(models.Model):
     date_created = fields.Char(string="Create date")
     total_net = fields.Float(string="Total Net")
     partner_id = fields.Many2one('res.partner', string='Customer', required=False, default=1)
+   
+    street = fields.Char(related='partner_id.street', string='Street', readonly=True)
+    city = fields.Char(related='partner_id.city', string='City', readonly=True)
+    state = fields.Char(related='partner_id.state_id.name', string='State', readonly=True)
+
     product_id = fields.Many2one('product.product', string='Product to repair', required=False)
     product_uom = fields.Many2one('uom.uom', string='Unit of measure', required=False)
     custom_repair_ids = fields.One2many('custom.repair', 'repair_order', 'Test Repair')
@@ -219,9 +225,9 @@ class InheritRepair(models.Model):
             customer_q = self.env['res.partner'].search([('vat', '=', vat_format)], limit=1)  # Select customer in odoo that matches the vat
             _logger.info('VAT format: %s', vat_format)
             _logger.info('Customer_q: %s', customer_q)
-            get_state = request.env['res.country.state'].sudo().search([('name', 'ilike', str(customer[0][5]).strip())])
+            get_state = request.env['res.country.state'].sudo().search([('name', 'ilike', str(customer[0][5]).strip())])  # get customer state
             _logger.info('Get State: %s', get_state)
-            if customer_q:
+            if customer_q:  # if customer found
                 get_state_res = customer_q.state_id
                 if not get_state_res:
                     if get_state:
@@ -233,8 +239,9 @@ class InheritRepair(models.Model):
                         self.partner_id.state_id = create_state.id
                 _logger.info('Create date: %s', customer[0][7])
                 self.partner_id = customer_q.id
-                new_create_date = str(customer[0][7])
-                self.date_created = new_create_date 
+                datetime_obj = datetime.strptime(str(customer[0][7]), '%Y-%m-%d %H:%M:%S')
+                self.date_created = datetime_obj.strftime('%d/%m/%Y')
+                _logger.info("New date created: %s", self.date_created) 
             else:
                 # Find state first
                 # get_state = request.env['res.country.state'].sudo().search([('name', 'ilike', str(customer[0][5]).strip())])
