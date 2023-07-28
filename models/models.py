@@ -107,7 +107,7 @@ class InheritRepair(models.Model):
         FROM    MAEEDO  
         LEFT OUTER JOIN MAEEN ON MAEEDO.ENDO = MAEEN.KOEN AND MAEEDO.SUENDO = MAEEN.SUEN 
         INNER JOIN MAEDDO MAEDDO ON MAEEDO.IDMAEEDO = MAEDDO.IDMAEEDO  
-        WHERE MAEEDO.TIDO IN ('FCV') AND MAEEDO.NUDO LIKE '%' + ?
+        WHERE MAEEDO.TIDO IN ('FCV') AND MAEDDO.LILG='SI' AND MAEEDO.NUDO LIKE '%' + ?
         """
         cursor.execute(query, (invoice_no,))
         rows = cursor.fetchall()
