@@ -60,8 +60,7 @@ class CustomRepair(models.Model):
                 # Add more fields as required
             })
             _logger.info("Newly created product: %s", new_product)
-            self.repair_order.product_id = new_
-product.id
+            self.repair_order.product_id = new_product.id
             # raise exceptions.ValidationError("Product with internal reference " + self.code + " not found.")
 
 
@@ -76,9 +75,9 @@ class InheritRepair(models.Model):
    
     street = fields.Char(related='partner_id.street', string='Street', readonly=True)
     city = fields.Char(related='partner_id.city', string='City', readonly=True)
-    state = fields.Char(related='partner_id.state_id.name', string='State', readonly=True)
+    state2 = fields.Char(related='partner_id.state_id.name', string='State', readonly=True)
 
-    product_id = fields.Many2one('product.product', string='Product to repair', required=False)
+    product_id = fields.Many2one('product.product', string='Product to repair', readonly=False, required=False)
     product_uom = fields.Many2one('uom.uom', string='Unit of measure', required=False)
     custom_repair_ids = fields.One2many('custom.repair', 'repair_order', 'Test Repair')
 
@@ -225,7 +224,7 @@ class InheritRepair(models.Model):
             customer_q = self.env['res.partner'].search([('vat', '=', vat_format)], limit=1)  # Select customer in odoo that matches the vat
             _logger.info('VAT format: %s', vat_format)
             _logger.info('Customer_q: %s', customer_q)
-            get_state = request.env['res.country.state'].sudo().search([('name', 'ilike', str(customer[0][5]).strip())])  # get customer state
+            get_state = request.env['res.country.state'].sudo().search([('name', 'ilike', str(customer[0][5]).rstrip())])  # get customer state
             _logger.info('Get State: %s', get_state)
             if customer_q:  # if customer found
                 get_state_res = customer_q.state_id
@@ -235,7 +234,7 @@ class InheritRepair(models.Model):
                     else: 
                         now = datetime.now()
                         timestamp = now.strftime("%Y%m%d%H%M%S")
-                        create_state = request.env['res.country.state'].sudo().create({'name': customer[0][5], 'code': str(timestamp), 'country_id': 46}) #Change the code by timestamp to be unique
+                        create_state = request.env['res.country.state'].sudo().create({'name': customer[0][5].rstrip(), 'code': str(timestamp), 'country_id': 46}) #Change the code by timestamp to be unique
                         self.partner_id.state_id = create_state.id
                 _logger.info('Create date: %s', customer[0][7])
                 self.partner_id = customer_q.id
@@ -254,16 +253,17 @@ class InheritRepair(models.Model):
                 else:
                     now = datetime.now()
                     timestamp = now.strftime("%Y%m%d%H%M%S")
-                    state = request.env['res.country.state'].sudo().create({'name': customer[0][5], 'code': str(timestamp), 'country_id': 46}) #Change the code by timestamp to be unique
+                    state = request.env['res.country.state'].sudo().create({'name': customer[0][5].rstrip(), 'code': str(timestamp), 'country_id': 46}) #Change the code by timestamp to be unique
                     state = state.id
                     _logger.info('else ng get state: %s', state)
                 customer_create = request.env['res.partner'].create({
-                    'name': customer[0][2],
-                    'street': customer[0][3],
-                    'city': customer[0][4],
+                    'name': customer[0][2].rstrip(),
+                    'street': customer[0][3].rstrip(),
+                    'city': customer[0][4].rstrip(),
                     'state_id': state,
-                    'phone': customer[0][6],
-                    'vat': vat_format # calculated vat here
+                    'phone': customer[0][6].rstrip(),
+                    'vat': vat_format, # calculated vat here
+                    'company_type': 'company'
                 })
                 # Set the created partner in repair form view
                 _logger.info("Newly created customer: %s", customer_create)
