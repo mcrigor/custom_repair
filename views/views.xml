@@ -13,21 +13,23 @@
                     <field name="partner_id"/>                
                     <field name="street" string=""/>
                     <field name="city" string=""/>
-                    <field name="state" string=""/>                                      
+                    <field name="state2" string=""/>                                      
                 </xpath>
  
                 <xpath expr="//field[@name='x_tec2']" position="after">                 
-                    <field name="date_created"/>
+                    <div class="oe_placeholder" style="height: 20px;"></div>
+                    <field name="date_created" invisible="1"/>
+                    <field name="date_created" string="Fecha creación factura"/>
                     <field name="formatted_field" string="Total neto"/>
-                    <field name="invoice_no"/>
-                    <button name="sync" string="Sync" type="object" action="sync_products" class="btn btn-primary o_form_button_edit"/>
+                    <field name="invoice_no" string="Numero de factura"/>
+                    <button name="sync" string="Sincronizar" type="object" action="sync_products" class="btn btn-primary o_form_button_edit"/>
                 </xpath>
 
                 <notebook position="inside">
-                    <page string="Billed equipment" name="billed_equipment">
+                    <page string="Equipos facturados" name="billed_equipment">
                         <field name="custom_repair_ids" mode="tree">
                             <tree string="My Custom Tree View" editable="bottom">
-                                <field name="product_code"/>
+                                <field name="product_code" string="Producto"/>
                                 <field name="formatted_cantidad"/>
                                 <field name="formatted_total"/>
                                 <button name="select_row" string="Select" type="object" class="oe_highlight"/>

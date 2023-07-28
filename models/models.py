@@ -60,8 +60,7 @@ class CustomRepair(models.Model):
                 # Add more fields as required
             })
             _logger.info("Newly created product: %s", new_product)
-            self.repair_order.product_id = new_
-product.id
+            self.repair_order.product_id = new_product.id
             # raise exceptions.ValidationError("Product with internal reference " + self.code + " not found.")
 
 
@@ -76,9 +75,9 @@ class InheritRepair(models.Model):
    
     street = fields.Char(related='partner_id.street', string='Street', readonly=True)
     city = fields.Char(related='partner_id.city', string='City', readonly=True)
-    state = fields.Char(related='partner_id.state_id.name', string='State', readonly=True)
+    state2 = fields.Char(related='partner_id.state_id.name', string='State', readonly=True)
 
-    product_id = fields.Many2one('product.product', string='Product to repair', required=False)
+    product_id = fields.Many2one('product.product', string='Product to repair', readonly=False, required=False)
     product_uom = fields.Many2one('uom.uom', string='Unit of measure', required=False)
     custom_repair_ids = fields.One2many('custom.repair', 'repair_order', 'Test Repair')
 
